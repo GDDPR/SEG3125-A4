@@ -5,7 +5,7 @@ import ProductCard from './ProductCard';
 import ProductFilters from './ProductFilters';
 
 const initialFilters = {
-  search: '', brand: '', price: '', skillLevel: '', rating: '', onSale: false, inStock: false,
+  search: '', brand: [], price: [], skillLevel: [], rating: [], onSale: false, inStock: false,
 };
 
 const categories = [
@@ -38,6 +38,14 @@ function matchesCategory(product, category) {
   return true;
 }
 
+function matchesPriceRange(price, range) {
+  if (range === 'under50') return price < 50;
+  if (range === '50to200') return price >= 50 && price <= 200;
+  if (range === '200to500') return price >= 200 && price <= 500;
+  if (range === 'over500') return price >= 500;
+  return true;
+}
+
 function ProductsPage({ addToCart }) {
   const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState(initialFilters);
@@ -49,14 +57,10 @@ function ProductsPage({ addToCart }) {
       if (!matchesCategory(product, category)) return false;
       const searchable = `${product.name} ${product.brand} ${product.description} ${product.features.join(' ')}`.toLowerCase();
       if (filters.search && !searchable.includes(filters.search.toLowerCase())) return false;
-      for (const key of ['brand', 'skillLevel']) {
-        if (filters[key] && product[key] !== filters[key]) return false;
-      }
-      if (filters.price === 'under50' && product.price >= 50) return false;
-      if (filters.price === '50to200' && (product.price < 50 || product.price > 200)) return false;
-      if (filters.price === '200to500' && (product.price < 200 || product.price > 500)) return false;
-      if (filters.price === 'over500' && product.price < 500) return false;
-      if (filters.rating && product.rating < Number(filters.rating)) return false;
+      if (filters.brand.length > 0 && !filters.brand.includes(product.brand)) return false;
+      if (filters.skillLevel.length > 0 && !filters.skillLevel.includes(product.skillLevel)) return false;
+      if (filters.price.length > 0 && !filters.price.some((range) => matchesPriceRange(product.price, range))) return false;
+      if (filters.rating.length > 0 && !filters.rating.some((rating) => product.rating >= Number(rating))) return false;
       if (filters.onSale && !product.onSale) return false;
       if (filters.inStock && !product.inStock) return false;
       return true;
@@ -68,7 +72,7 @@ function ProductsPage({ addToCart }) {
     return result;
   }, [category, filters, sort]);
 
-  const facetCount = Object.values(filters).filter((value) => value !== '' && value !== false).length;
+  const facetCount = (filters.search ? 1 : 0) + filters.brand.length + filters.price.length + filters.skillLevel.length + filters.rating.length + Number(filters.onSale) + Number(filters.inStock);
   const activeCount = facetCount + (category === 'all' ? 0 : 1);
   const clearFilters = () => { setFilters(initialFilters); setCategory('all'); };
 
@@ -79,7 +83,6 @@ function ProductsPage({ addToCart }) {
           <p className="ff-eyebrow">Find your fit</p>
           <h1>Shop golf equipment</h1>
           <p>Compare clubs and accessories by the details that shape your game. Not sure where to start? Try skill level and what you want help with.</p>
-          <div className="ff-header-proof"><span>49 real products</span><span>4 trusted golf brands</span><span>Clear fit guidance</span></div>
         </div>
       </section>
       <nav className="ff-category-nav" aria-label="Shop by category">

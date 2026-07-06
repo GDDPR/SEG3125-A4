@@ -1,8 +1,18 @@
-const labels = {
-  brand: 'Brand', skillLevel: 'Skill level',
-};
-
 const brandOptions = ['Callaway', 'Ping', 'Titleist', 'Cleveland'];
+
+const priceOptions = [
+  { value: 'under50', label: 'Under $50' },
+  { value: '50to200', label: '$50–$200' },
+  { value: '200to500', label: '$200–$500' },
+  { value: 'over500', label: '$500+' },
+];
+
+const ratingOptions = [
+  { value: '3', label: '3+ stars' },
+  { value: '3.5', label: '3.5+ stars' },
+  { value: '4', label: '4+ stars' },
+  { value: '4.5', label: '4.5+ stars' },
+];
 
 function unique(products, key) {
   return [...new Set(products.map((product) => product[key]))].sort();
@@ -10,51 +20,46 @@ function unique(products, key) {
 
 function ProductFilters({ products, filters, setFilters, clearFilters, activeCount }) {
   const update = (key, value) => setFilters((current) => ({ ...current, [key]: value }));
-  const options = {
-    brand: brandOptions,
-    skillLevel: unique(products, 'skillLevel'),
-  };
+  const toggleOption = (key, value) => setFilters((current) => ({
+    ...current,
+    [key]: current[key].includes(value) ? current[key].filter((item) => item !== value) : [...current[key], value],
+  }));
+  const filterGroups = [
+    { key: 'brand', label: 'Brand', options: brandOptions.map((value) => ({ value, label: value })) },
+    { key: 'price', label: 'Price range', options: priceOptions },
+    { key: 'skillLevel', label: 'Skill level', options: unique(products, 'skillLevel').map((value) => ({ value, label: value })) },
+    { key: 'rating', label: 'Minimum rating', options: ratingOptions },
+  ];
 
   return (
     <aside className="ff-filters" aria-label="Product filters">
       <div className="ff-filter-heading">
-        <div><p className="ff-eyebrow">Narrow the fairway</p><h2>Filters</h2></div>
-        {activeCount > 0 && <span className="ff-filter-count">{activeCount} active</span>}
+        <p className="ff-eyebrow">Narrow the fairway</p>
+        <div className="ff-filter-title-row"><h2>Filters</h2>{activeCount > 0 && <span className="ff-filter-count">{activeCount} active</span>}</div>
       </div>
-      <p className="ff-filter-help">Choose what matters to you. Results update as you go.</p>
+      <p className="ff-filter-help">Select one or more options. Results update as you go.</p>
 
       <div className="ff-filter-group">
         <label htmlFor="filter-search">Search</label>
-        <input id="filter-search" type="search" placeholder="Name, brand, or feature" value={filters.search} onChange={(e) => update('search', e.target.value)} />
+        <input id="filter-search" type="search" placeholder="Name, brand, or feature" value={filters.search} onChange={(event) => update('search', event.target.value)} />
       </div>
 
-      {Object.entries(options).map(([key, values]) => (
-        <div className="ff-filter-group" key={key}>
-          <label htmlFor={`filter-${key}`}>{labels[key]}</label>
-          <select id={`filter-${key}`} value={filters[key]} onChange={(e) => update(key, e.target.value)}>
-            <option value="">All {labels[key].toLowerCase()}</option>
-            {values.map((value) => <option value={value} key={value}>{value}</option>)}
-          </select>
-        </div>
+      {filterGroups.map((group) => (
+        <fieldset className="ff-filter-group ff-filter-fieldset" key={group.key}>
+          <legend>{group.label}</legend>
+          <div className="ff-filter-options">{group.options.map((option) => (
+            <label className="ff-filter-option" key={option.value}>
+              <input type="checkbox" checked={filters[group.key].includes(option.value)} onChange={() => toggleOption(group.key, option.value)} />
+              <span>{option.label}</span>
+            </label>
+          ))}</div>
+        </fieldset>
       ))}
 
-      <div className="ff-filter-group">
-        <label htmlFor="filter-price">Price range</label>
-        <select id="filter-price" value={filters.price} onChange={(e) => update('price', e.target.value)}>
-          <option value="">Any price</option><option value="under50">Under $50</option>
-          <option value="50to200">$50–$200</option><option value="200to500">$200–$500</option>
-          <option value="over500">$500+</option>
-        </select>
+      <div className="ff-filter-toggles">
+        <label className="ff-check"><input type="checkbox" checked={filters.onSale} onChange={(event) => update('onSale', event.target.checked)} /> On sale only</label>
+        <label className="ff-check"><input type="checkbox" checked={filters.inStock} onChange={(event) => update('inStock', event.target.checked)} /> In stock only</label>
       </div>
-      <div className="ff-filter-group">
-        <label htmlFor="filter-rating">Minimum rating</label>
-        <select id="filter-rating" value={filters.rating} onChange={(e) => update('rating', e.target.value)}>
-          <option value="">Any rating</option><option value="3">3+</option><option value="3.5">3.5+</option>
-          <option value="4">4+</option><option value="4.5">4.5+</option>
-        </select>
-      </div>
-      <label className="ff-check"><input type="checkbox" checked={filters.onSale} onChange={(e) => update('onSale', e.target.checked)} /> On sale only</label>
-      <label className="ff-check"><input type="checkbox" checked={filters.inStock} onChange={(e) => update('inStock', e.target.checked)} /> In stock only</label>
       <button type="button" className="ff-button ff-button-outline ff-button-full" onClick={clearFilters} disabled={activeCount === 0}>Clear filters</button>
     </aside>
   );
