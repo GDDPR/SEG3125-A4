@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { Row, Col } from 'react-bootstrap';
 
@@ -24,6 +24,15 @@ function App() {
     const isMemoryGamePage = location.pathname.startsWith('/memory-game');
     const isEcommercePage = location.pathname.startsWith('/ecommerce');
     const isStandalonePage = isServicePage || isMemoryGamePage || isEcommercePage;
+
+    useEffect(() => {
+        const sectionId = location.state?.scrollTo;
+        if (location.pathname === '/' && sectionId) {
+            window.requestAnimationFrame(() => {
+                document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+    }, [location.pathname, location.state]);
 
     function toggleDarkMode() {
         setDarkMode(!darkMode);

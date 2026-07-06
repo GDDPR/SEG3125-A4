@@ -1,7 +1,13 @@
 import { Button, Container, Nav, Navbar } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 function NavigationBar({ darkMode, toggleDarkMode }) {
+    const navigate = useNavigate();
+
+    function goToSection(sectionId) {
+        navigate('/', { state: { scrollTo: sectionId } });
+    }
+
     return (
         <Navbar
             expand="lg"
@@ -19,8 +25,8 @@ function NavigationBar({ darkMode, toggleDarkMode }) {
 
                 <Navbar.Collapse id="main-navbar">
                     <Nav className="ms-auto align-items-lg-center">
-                        <Nav.Link href="/#work">How I Work</Nav.Link>
-                        <Nav.Link href="/#projects">Case Studies</Nav.Link>
+                        <Nav.Link as="button" type="button" onClick={() => goToSection('work')}>How I Work</Nav.Link>
+                        <Nav.Link as="button" type="button" onClick={() => goToSection('projects')}>Case Studies</Nav.Link>
 
                         <Button
                             variant={darkMode ? 'outline-light' : 'outline-dark'}
