@@ -8,6 +8,7 @@ import ProjectCard from './components/ProjectCard';
 import ComingSoonPage from './components/ComingSoonPage';
 import DoctorOfficePage from './components/doctorOffice/DoctorOfficePage';
 import MemoryGame from './components/memoryGame/MemoryGame';
+import EcommercePage from './components/ecommerce/EcommercePage';
 
 import storeImage from './assets/store.png'
 import gameImage from './assets/game.jpg'
@@ -21,14 +22,15 @@ function App() {
     const location = useLocation();
     const isServicePage = location.pathname.startsWith('/service');
     const isMemoryGamePage = location.pathname.startsWith('/memory-game');
-    const isStandalonePage = isServicePage || isMemoryGamePage;
+    const isEcommercePage = location.pathname.startsWith('/ecommerce');
+    const isStandalonePage = isServicePage || isMemoryGamePage || isEcommercePage;
 
     function toggleDarkMode() {
         setDarkMode(!darkMode);
     }
 
     return (
-        <div className={`${darkMode ? 'app dark-mode' : 'app'}${isServicePage ? ' service-app' : ''}${isMemoryGamePage ? ' memory-game-app' : ''}`}>
+        <div className={`${darkMode ? 'app dark-mode' : 'app'}${isServicePage ? ' service-app' : ''}${isMemoryGamePage ? ' memory-game-app' : ''}${isEcommercePage ? ' ecommerce-app' : ''}`}>
             {!isStandalonePage && (
                 <NavigationBar
                     darkMode={darkMode}
@@ -90,8 +92,9 @@ function App() {
 
                                   <Col lg={6}>
                                       <ProjectCard
-                                          title="E-Commerce Website"
-                                          description="Description for a future e-commerce website."
+                                          title="FairwayFit Golf"
+                                          techStack="Assignment 4 / A4"
+                                          description="A golf e-commerce prototype with faceted search, cart, checkout flow, and post-shopping survey."
                                           image={storeImage}
                                           link="/ecommerce"
                                       />
@@ -121,15 +124,7 @@ function App() {
                     element={<MemoryGame />}
                 />
 
-                <Route
-                    path="/ecommerce"
-                    element={
-                        <ComingSoonPage
-                            title="E-Commerce Website"
-                            description="This page will contain my future e-commerce website design project."
-                        />
-                    }
-                />
+                <Route path="/ecommerce/*" element={<EcommercePage />} />
 
                 <Route
                     path="/analytics"

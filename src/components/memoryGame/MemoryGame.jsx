@@ -47,6 +47,14 @@ const limits = {
 
 const minPatternCells = 3;
 
+const circleColorOptions = [
+    { id: 'sky', label: 'Sky', value: '#9ebbf0', rgb: '158, 187, 240' },
+    { id: 'mint', label: 'Mint', value: '#75e3b1', rgb: '117, 227, 177' },
+    { id: 'gold', label: 'Gold', value: '#ffcb57', rgb: '255, 203, 87' },
+    { id: 'rose', label: 'Rose', value: '#ff8aa6', rgb: '255, 138, 166' },
+    { id: 'violet', label: 'Violet', value: '#c5a7ff', rgb: '197, 167, 255' },
+];
+
 function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
 }
@@ -109,16 +117,53 @@ function formatSettingValue(setting, value) {
     return value;
 }
 
-function MemoryHeader({ screen, onHome, onSettings }) {
+function HomeIcon() {
+    return (
+        <svg className="memory-button-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 11.2 12 4l9 7.2" />
+            <path d="M5.5 10.5V20h4.75v-5.25h3.5V20h4.75v-9.5" />
+        </svg>
+    );
+}
+
+function WrenchIcon() {
+    return (
+        <svg className="memory-button-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M14.7 6.3a4.6 4.6 0 0 0 5.1 5.1l-8.7 8.7a2.2 2.2 0 0 1-3.1 0l-2.1-2.1a2.2 2.2 0 0 1 0-3.1l8.8-8.6Z" />
+            <path d="m7.6 16.4 2 2" />
+        </svg>
+    );
+}
+
+function GearIcon() {
+    return (
+        <svg className="memory-button-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+            <path d="M19.4 15a8.2 8.2 0 0 0 .1-1l2-1.5-2-3.5-2.4 1a8 8 0 0 0-1.7-1L15 6.5h-4L10.6 9a8 8 0 0 0-1.7 1l-2.4-1-2 3.5 2 1.5a8.2 8.2 0 0 0 .1 1l-2.1 1.5 2 3.5 2.5-1a7.7 7.7 0 0 0 1.6.9l.4 2.6h4l.4-2.6a7.7 7.7 0 0 0 1.6-.9l2.5 1 2-3.5L19.4 15Z" />
+        </svg>
+    );
+}
+
+function ArrowRightIcon() {
+    return (
+        <svg className="memory-button-icon memory-button-icon-right" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14" />
+            <path d="m13 6 6 6-6 6" />
+        </svg>
+    );
+}
+
+function MemoryHeader({ onHome, onStageConfig, onColorSettings }) {
     return (
         <header className="memory-header">
             <button
-                className="memory-header-link memory-header-button"
+                className="memory-header-link memory-home-button"
                 type="button"
                 onClick={onHome}
                 aria-label="Return to memory game instructions"
             >
-                Home
+                <HomeIcon />
+                <span>Home</span>
             </button>
 
             <div className="memory-header-center">
@@ -126,15 +171,16 @@ function MemoryHeader({ screen, onHome, onSettings }) {
                 <span>Pattern Recall</span>
             </div>
 
-            {screen === 'intro' ? (
-                <button className="memory-header-link memory-header-button" type="button" onClick={onSettings}>
-                    Stage Config
+            <div className="memory-header-actions">
+                <button className="memory-header-link" type="button" onClick={onStageConfig}>
+                    <WrenchIcon />
+                    <span>Stage Config</span>
                 </button>
-            ) : (
-                <button className="memory-header-link memory-header-button" type="button" onClick={onSettings}>
-                    Settings
+                <button className="memory-header-link" type="button" onClick={onColorSettings}>
+                    <GearIcon />
+                    <span>Settings</span>
                 </button>
-            )}
+            </div>
         </header>
     );
 }
@@ -244,6 +290,40 @@ function MiniGrid({ config, pattern, selectedCells, title }) {
     );
 }
 
+function ColorSettingsPanel({ options, selectedColor, onSelectColor, onClose }) {
+    return (
+        <section className="memory-color-settings" aria-label="Circle color settings">
+            <div>
+                <p className="memory-eyebrow">Settings</p>
+                <h2>Circle Color</h2>
+            </div>
+
+            <div className="memory-color-options">
+                {options.map((option) => (
+                    <button
+                        key={option.id}
+                        type="button"
+                        className={`memory-color-option${selectedColor === option.id ? ' active' : ''}`}
+                        onClick={() => onSelectColor(option.id)}
+                        aria-pressed={selectedColor === option.id}
+                    >
+                        <span
+                            className="memory-color-swatch"
+                            style={{ background: option.value, color: option.value }}
+                            aria-hidden="true"
+                        />
+                        <span>{option.label}</span>
+                    </button>
+                ))}
+            </div>
+
+            <button className="memory-text-button memory-color-close" type="button" onClick={onClose}>
+                Close
+            </button>
+        </section>
+    );
+}
+
 function MemoryGame() {
     const [screen, setScreen] = useState('intro');
     const [config, setConfig] = useState(defaultConfig);
@@ -255,8 +335,14 @@ function MemoryGame() {
     const [rememberProgress, setRememberProgress] = useState(100);
     const [roundResults, setRoundResults] = useState([]);
     const [lastRound, setLastRound] = useState(null);
+    const [selectedColor, setSelectedColor] = useState(circleColorOptions[0].id);
+    const [showColorSettings, setShowColorSettings] = useState(false);
 
     const selectedSet = useMemo(() => new Set(selectedCells), [selectedCells]);
+    const circleColor = useMemo(
+        () => circleColorOptions.find((option) => option.id === selectedColor) || circleColorOptions[0],
+        [selectedColor],
+    );
     const totalRounds = config.rounds;
     const currentRoundNumber = roundIndex + 1;
 
@@ -356,6 +442,7 @@ function MemoryGame() {
 
     function resetToIntro() {
         setScreen('intro');
+        setShowColorSettings(false);
         setPhase('idle');
         setRoundIndex(0);
         setPattern([]);
@@ -418,8 +505,30 @@ function MemoryGame() {
     const starTotal = totalRounds <= 5 ? totalRounds : 5;
 
     return (
-        <main className="memory-game-page">
-            <MemoryHeader screen={screen} onHome={resetToIntro} onSettings={() => setScreen('config')} />
+        <main
+            className="memory-game-page"
+            style={{
+                '--memory-token': circleColor.value,
+                '--memory-token-rgb': circleColor.rgb,
+            }}
+        >
+            <MemoryHeader
+                onHome={resetToIntro}
+                onStageConfig={() => {
+                    setShowColorSettings(false);
+                    setScreen('config');
+                }}
+                onColorSettings={() => setShowColorSettings((isOpen) => !isOpen)}
+            />
+
+            {showColorSettings && (
+                <ColorSettingsPanel
+                    options={circleColorOptions}
+                    selectedColor={selectedColor}
+                    onSelectColor={setSelectedColor}
+                    onClose={() => setShowColorSettings(false)}
+                />
+            )}
 
             {screen === 'intro' && (
                 <section className="memory-panel memory-intro-panel">
@@ -451,7 +560,8 @@ function MemoryGame() {
                         </div>
 
                         <button className="memory-primary-button" type="button" onClick={() => setScreen('config')}>
-                            Stage Config
+                            <WrenchIcon />
+                            <span>Stage Config</span>
                         </button>
                     </div>
 
@@ -587,7 +697,8 @@ function MemoryGame() {
 
                         {phase === 'recall' && (
                             <button className="memory-primary-button" type="button" onClick={submitRound}>
-                                Submit
+                                <span>Submit</span>
+                                <ArrowRightIcon />
                             </button>
                         )}
                     </div>
